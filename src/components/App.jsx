@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
 import { fetchImages } from './API';
@@ -7,82 +7,73 @@ import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 import { Loader } from './Loader/Loader';
 
-export class App extends Component {
-  state = {
-    images: [],
-    query: '',
-    page: 1,
-    loading: false,
-    error: false,
-    loadMore: false,
-  };
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [loadMore, setLoadMore] = useState(false);
 
-  async componentDidMount() {
-    try {
-      this.setState({ loading: true, error: false });
-      const initialImages = await fetchImages('nature', 1);
-      this.setState({
-        images: initialImages.hits,
-      });
-    } catch (error) {
-      this.setState({
-        error: true,
-      });
-    } finally {
-      this.setState({ loading: false });
-    }
-  }
-
-  async componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
-    if (prevState.query !== query || prevState.page !== page) {
+  useEffect(() => {
+    async function getImages() {
       try {
-        this.setState({ loading: true, error: false });
-        const searchedImages = await fetchImages(query, page);
-        if (searchedImages.hits.length === 0) {
-          toast.error('Sorry, no more images available');
-          this.setState({ loadMore: false });
-        }
-        this.setState(prevState => ({
-          images: [...prevState.images, ...searchedImages.hits],
-          loadMore: page < Math.ceil(searchedImages.totalHits / 12),
-        }));
-      } catch (err) {
-        this.setState({ error: true });
+        setLoading(true);
+        setError(false);
+        const initialImages = await fetchImages('nature', 1);
+        setImages(initialImages.hits);
+      } catch (error) {
+        setError(true);
       } finally {
-        this.setState({ loading: false });
+        setLoading(false);
       }
     }
-  }
+    getImages();
+  }, []);
 
-  handleSubmit = newQuery => {
-    this.setState({
-      query: newQuery,
-      page: 1,
-      images: [],
-    });
+  useEffect(() => {
+    if (query === '') {
+      return;
+    }
+    async function getNewImages() {
+      try {
+        setLoading(true);
+        setError(false);
+        const searchedImages = await fetchImages(query, page);
+
+        if (searchedImages.hits.length === 0) {
+          toast.error('Sorry, no more images available');
+          setLoadMore(false);
+        }
+        setImages(prevImages => [...prevImages, ...searchedImages.hits]);
+        setLoadMore(page < Math.ceil(searchedImages.totalHits / 12));
+      } catch (err) {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+    getNewImages();
+  }, [query, page]);
+
+  const handleSubmit = newQuery => {
+    setQuery(newQuery);
+    setPage(1);
+    setImages([]);
   };
 
-  handleLoadMore = () => {
-    this.setState(prevState => {
-      return {
-        page: prevState.page + 1,
-      };
-    });
+  const handleLoadMore = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-
-  render() {
-    const { error, images, loading, loadMore } = this.state;
-    return (
-      <div>
-        <SearchBar onSubmit={this.handleSubmit} />
-        {loading && <Loader />}
-        {error && <p>Oops! Something went wrong! Please reload this page!</p>}
-        <ImageGallery images={images} />
-        {loadMore && <Button onClick={this.handleLoadMore} />}
-        <Toaster />
-      </div>
-    );
-  }
-}
+  return (
+    <div>
+      <SearchBar onSubmit={handleSubmit} />
+      {loading && <Loader />}
+      {error && <p>Oops! Something went wrong! Please reload this page!</p>}
+      <ImageGallery images={images} />
+      {loadMore && <Button onClick={handleLoadMore} />}
+      <Toaster />
+    </div>
+  );
+};

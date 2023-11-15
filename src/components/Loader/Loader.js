@@ -6,7 +6,7 @@ export const Loader = () => {
     return (
 <Wrapper>
 <InfinitySpin 
-  width='200px'
+  width='200'
   color="green"
 />
 </Wrapper>
