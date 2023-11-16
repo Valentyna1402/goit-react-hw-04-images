@@ -9,32 +9,13 @@ import { Loader } from './Loader/Loader';
 
 export const App = () => {
   const [images, setImages] = useState([]);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState('nature');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [loadMore, setLoadMore] = useState(false);
 
   useEffect(() => {
-    async function getImages() {
-      try {
-        setLoading(true);
-        setError(false);
-        const initialImages = await fetchImages('nature', 1);
-        setImages(initialImages.hits);
-      } catch (error) {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    }
-    getImages();
-  }, []);
-
-  useEffect(() => {
-    if (query === '') {
-      return;
-    }
     async function getNewImages() {
       try {
         setLoading(true);
