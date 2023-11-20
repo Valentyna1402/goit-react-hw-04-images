@@ -17,9 +17,15 @@ export const App = () => {
 
   useEffect(() => {
     async function getNewImages() {
+      if (query === '') {
+        setLoadMore(false);
+        toast.error('Please, enter your request');
+        return;
+      }
       try {
         setLoading(true);
         setError(false);
+        setLoadMore(false);
         const searchedImages = await fetchImages(query, page);
 
         if (searchedImages.hits.length === 0) {
